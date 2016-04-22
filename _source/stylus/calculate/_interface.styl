@@ -1,21 +1,109 @@
+#wrapper
+	background lighten($primary_black,10)
+	padding 1rem
 #calc-gui-display
 	display block
 	text-align right
 	font-size 2rem
+	border solid .25rem $primary_black
+	height 4rem
+	min-height 4rem
+	line-height 3.25rem
+	padding 0 1rem
+	background $primary_border
+	color $primary_white
+	text-shadow 1px 1px 2px $primary_border
+	span
+		display inline-block
+		vertical-align middle
+		letter-spacing .05rem
+	.operand
+		color $primary_color
 #calc-gui-numpad
 	display inline-block
+	vertical-align top
 	width 75%
+	border solid .25rem $primary_black
+	border-right none
+	border-top none
 	> a
+		position relative
 		display inline-block
 		width 33.33%
-		background #ACACAC
-		padding 1rem
+		height 5.25rem
+		line-height 5.25rem
 		text-align center
+		border solid 1px $primary_border
+		border-bottom none
+		border-right none
+		color $primary_white
+		background $primary_black
+		text-shadow 1px 1px 1px $primary_border
+		font-size 2rem
+		overflow hidden
+		vertical-align middle
+		&:before
+			animation-name materialOut
+			animation-duration 1s
+			display block
+			content ""
+			background rgba(255,255,255,.1)
+			position absolute
+			top 50%
+			left 50%
+			width 0em
+			height 0em
+			line-height 0em
+			border-radius 50%
+			transform translateX(-50%) translateY(-50%)
+		&:nth-child(10),&:nth-child(11),&:nth-child(12)
+			border-bottom solid 1px $primary_border
+		&:hover
+			&:before
+				display block
+				animation-name materialHover
+				animation-duration 2s
+				width 100rem
+				height 100rem
 		
 #calc-gui-operands
 	display inline-block
 	width 25%
+	border solid .25rem $primary_black
+	border-left none
+	border-top none
 	> a
+		position relative
+		overflow hidden
 		display block
-		background #ACACAC
-		padding 1rem
+		height 3.5rem
+		line-height 3.5rem
+		background $primary_color
+		color $primary_white
+		text-align center
+		border-top solid 1px $primary_border
+		border-bottom none
+		text-shadow 1px 1px 1px $primary_border
+		font-size 1.3rem
+		font-weight bold
+		&:before
+			animation-name materialOut
+			animation-duration 1s
+			display block
+			content ""
+			background rgba(255,255,255,.1)
+			position absolute
+			top 50%
+			left 50%
+			width 0em
+			height 0em
+			line-height 0em
+			border-radius 50%
+			transform translateX(-50%) translateY(-50%)
+		&:hover
+			&:before
+				display block
+				animation-name materialHover
+				animation-duration 2s
+				width 100rem
+				height 100rem
