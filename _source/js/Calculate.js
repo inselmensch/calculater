@@ -22,7 +22,10 @@ Calculate.prototype = {
 	lastResult: '',
 	operand: '',
 	options: {
-		_parent: 'wrapper'
+		_parent: 'wrapper',
+		warningInfinity: 'Chuck Norris would know this.',
+		thousands: '.',
+		dot: ','
 	},
 	createButton: function(symbol,callback){
 		var btn = document.createElement('a');
@@ -52,6 +55,7 @@ Calculate.prototype = {
 				var btn = this.createButton(num,function(){
 					_this.onKey(null,this.innerHTML);
 				});
+				btn.id = 'numpad-btn-' + num;
 				numPad.appendChild(btn);
 			}
 
@@ -72,10 +76,20 @@ Calculate.prototype = {
 			wrapper.appendChild(display);
 			wrapper.appendChild(numPad);
 			wrapper.appendChild(operandsCol);
+
+		this.render();
 	},
 	render: function(){
-		var displayText = this.lastResult + ' ' + this.operand + ' ' + this.currentEntry;
+		if(this.lastResult == 'Infinity') this.lastResult = this.options.warningInfinity
+		var displayText = '<span>' + this.format(this.lastResult) + '</span>';
+			displayText += ' <span class="operand">' + this.operand + '</span> ';
+			displayText += '<span>' + this.format(this.currentEntry) + '</span>';
 		document.getElementById('calc-gui-display').innerHTML = displayText;
+	},
+	format: function(number){
+		var output = '';
+
+		return number;
 	},
 	addDigit: function(digit){
 		if('' == this.operand && '' != this.lastResult) this.lastResult = '';
@@ -87,6 +101,7 @@ Calculate.prototype = {
 	},
 	setOperand: function(operand){
 		if(this.operand && this.currentEntry) this.calc();
+		if('' == this.lastResult && '' == this.currentEntry) this.currentEntry = '0';
 		if(this.currentEntry)
 		{
 			this.lastResult = this.currentEntry;
@@ -95,7 +110,6 @@ Calculate.prototype = {
 		this.operand = operand;
 	},
 	onKey: function(keyCode,pressedKey){
-		console.log(pressedKey);
 		if((keyCode >= 48 && keyCode <= 57))
 		{
 			return this.addDigit(parseInt(keyCode)-48);
@@ -144,6 +158,8 @@ Calculate.prototype = {
 	},
 	calc: function(){
 		if(!this.operand) return;
+
+		if('' == this.currentEntry || '-' == this.currentEntry) this.currentEntry = '0';
 
 		var value_A = this.lastResult.indexOf('.') >= 0 ? parseFloat(this.lastResult) : parseInt(this.lastResult);
 		var value_B = this.currentEntry.indexOf('.') >= 0 ? parseFloat(this.currentEntry) : parseInt(this.currentEntry);
