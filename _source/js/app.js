@@ -1,4 +1,5 @@
 window.onload = function(){
-	window.CalculateInterface = new Calculate();
-	console.log(window.CalculateInterface);
+	window.CalculateInterface = new Calculate({
+		_parent: 'calculator'
+	});
 };
