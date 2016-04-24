@@ -27,6 +27,23 @@ Calculate.prototype = {
 		thousands: '.',
 		dot: ','
 	},
+	operands: {
+		'+': function(num_a,num_b){
+			return num_a+num_b;
+		},
+		'-': function(num_a,num_b){
+			return num_a-num_b;
+		},
+		'*': function(num_a,num_b){
+			return num_a*num_b;
+		},
+		'/': function(num_a,num_b){
+			return num_a/num_b;
+		},
+		'^': function(num_a,num_b){
+			return Math.pow(num_a,num_b);
+		}
+	},
 	createButton: function(symbol,callback){
 		var btn = document.createElement('a');
 			btn.href = 'javascript:void(0);';
@@ -54,6 +71,7 @@ Calculate.prototype = {
 				var num = nums[i];
 				var btn = this.createButton(num,function(){
 					_this.onKey(null,this.innerHTML);
+					this.blur();
 				});
 				btn.id = 'numpad-btn-' + num;
 				numPad.appendChild(btn);
@@ -62,12 +80,17 @@ Calculate.prototype = {
 		var operandsCol = document.createElement('DIV');
 			operandsCol.id = 'calc-gui-operands';
 
-			var operands = ['CLR','/','*','-','+','^'];
-			for(i in operands)
+			var clearBtn = this.createButton('CLR',function(){
+				_this.onKey(null,this.innerHTML);
+				this.blur();
+			});
+			operandsCol.appendChild(clearBtn);
+
+			for(symbol in this.operands)
 			{
-				var operand = operands[i];
-				var btn = this.createButton(operand,function(){
+				var btn = this.createButton(symbol,function(){
 					_this.onKey(null,this.innerHTML);
+					this.blur();
 				});
 				operandsCol.appendChild(btn);
 			}
@@ -80,16 +103,63 @@ Calculate.prototype = {
 		this.render();
 	},
 	render: function(){
-		if(this.lastResult == 'Infinity') this.lastResult = this.options.warningInfinity
-		var displayText = '<span>' + this.format(this.lastResult) + '</span>';
+		/*if(this.lastResult == 'Infinity')
+		{
+			document.getElementById('calc-gui-display').innerHTML = this.options.warningInfinity;
+			return;
+		}*/
+
+		var displayText = '';
+			if(this.lastResult == 'Infinity' || this.lastResult == 'NaN')
+			{
+				displayText += '<span>' + this.options.warningInfinity + '</span>';
+			}
+			else
+			{
+				displayText += '<span>' + (this.format(this.lastResult)) + '</span>';
+			}
 			displayText += ' <span class="operand">' + this.operand + '</span> ';
 			displayText += '<span>' + this.format(this.currentEntry) + '</span>';
 		document.getElementById('calc-gui-display').innerHTML = displayText;
 	},
 	format: function(number){
 		var output = '';
+		var decimalPlace = null;
+		var firstDigits = null;
+		number = typeof number == 'string' ? number : number.toString();
 
-		return number;
+		if(number.indexOf('.') >= 0)
+		{
+			var numberParts = number.split('.');
+			number = numberParts[0];
+			decimalPlace = numberParts[1];
+		}
+
+		if(number.length > 3)
+		{
+			var firstDigitsNum = number.length % 3;
+			if(firstDigitsNum > 0)
+			{
+				firstDigits = number.substr(0,firstDigitsNum);
+				number = number.substr(firstDigitsNum,number.length);
+			}
+
+			var digits = number.split('');
+			var formatted = [];
+			for(index in digits)
+			{
+				if(index % 3 == 0 && index !== 0 && formatted.length != 0)
+				{
+					formatted.push(this.options.thousands);
+				}
+				formatted.push(digits[index]);
+			}
+			number = (firstDigits !== null ? firstDigits + this.options.thousands : '') + formatted.join('');
+		}
+
+		output = number + (decimalPlace !== null ? this.options.dot + decimalPlace : '');
+
+		return output;
 	},
 	addDigit: function(digit){
 		if('' == this.operand && '' != this.lastResult) this.lastResult = '';
@@ -101,6 +171,7 @@ Calculate.prototype = {
 	},
 	setOperand: function(operand){
 		if(this.operand && this.currentEntry) this.calc();
+		if(this.lastResult == 'Infinity' || this.lastResult == 'NaN') this.lastResult = '0';
 		if('' == this.lastResult && '' == this.currentEntry) this.currentEntry = '0';
 		if(this.currentEntry)
 		{
@@ -108,16 +179,31 @@ Calculate.prototype = {
 			this.currentEntry = '';
 		}
 		this.operand = operand;
+		this.render();
 	},
 	onKey: function(keyCode,pressedKey){
 		if((keyCode >= 48 && keyCode <= 57))
 		{
-			return this.addDigit(parseInt(keyCode)-48);
+			this.addDigit(parseInt(keyCode)-48);
+			return;
 		}
 
-		if('0' == pressedKey || (parseInt(pressedKey) > 0 && parseInt(pressedKey) <= 9))
+		if((keyCode >= 96 && keyCode <= 105))
 		{
-			return this.addDigit(parseInt(pressedKey));
+			this.addDigit(parseInt(keyCode)-96);
+			return;
+		}
+
+		if(this.operands[pressedKey])
+		{
+			if('-' == pressedKey && '' == this.currentEntry && this.operand)
+			{
+				this.currentEntry = '-';
+			}
+			else
+			{
+				this.setOperand(pressedKey);
+			}
 		}
 
 		switch(pressedKey)
@@ -130,29 +216,23 @@ Calculate.prototype = {
 				this.operand = '';
 				this.currentEntry = '';
 				break;
-			case '+':
-			case '*':
-			case '/':
-			case '^':
-				this.setOperand(pressedKey);
-				break;
-			case '-':
-				if(this.operand && '' == this.currentEntry)
-				{
-					this.currentEntry = '-';
-				}
-				else
-				{
-					this.setOperand('-');
-				}
-				break;
 			case ',':
 			case '.':
 				if(this.currentEntry.slice(-1) != '.' && this.currentEntry.indexOf('.') < 0)
 				{
+					if('' == this.currentEntry) this.currentEntry = '0';
 					this.addDigit('.');
 				}
 				break;
+		}
+
+		if(typeof pressedKey == 'string')
+		{
+			if('0' == pressedKey || (parseInt(pressedKey) > 0 && parseInt(pressedKey) <= 9))
+			{
+				this.addDigit(parseInt(pressedKey));
+				return;
+			}
 		}
 		this.render();
 	},
@@ -161,10 +241,13 @@ Calculate.prototype = {
 
 		if('' == this.currentEntry || '-' == this.currentEntry) this.currentEntry = '0';
 
+		if(this.lastResult == 'Infinity') this.lastResult = '0';
+		if(this.currentEntry == 'Infinity') this.currentEntry = '0';
+
 		var value_A = this.lastResult.indexOf('.') >= 0 ? parseFloat(this.lastResult) : parseInt(this.lastResult);
 		var value_B = this.currentEntry.indexOf('.') >= 0 ? parseFloat(this.currentEntry) : parseInt(this.currentEntry);
 
-		switch(this.operand)
+		/*switch(this.operand)
 		{
 			case '+':
 				this.lastResult = value_A + value_B;
@@ -180,6 +263,11 @@ Calculate.prototype = {
 				break;
 			case '^':
 				this.lastResult = Math.pow(value_A,value_B);
+		}*/
+
+		if(this.operands[this.operand])
+		{
+			this.lastResult = this.operands[this.operand](value_A,value_B);
 		}
 
 		this.lastResult += '';
@@ -218,16 +306,8 @@ Calculate.prototype = {
 			switch(keyCode)
 			{
 				case 13:
-					if('' == _this.lastResult && '' != _this.currentEntry)
-					{
-						_this.lastResult = _this.currentEntry;
-						_this.currentEntry = '';
-					}
-					else
-					{
-						_this.calc();
-						_this.render();
-					}
+				case 61:
+					_this.onKey(keyCode,'=');
 					break;
 				case 8:
 					if(_this.isActive)
